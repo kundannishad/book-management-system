@@ -1,0 +1,55 @@
+version: "3.3"
+
+services:
+  go-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql-db
+    restart: on-failure
+    environment:
+      DB_HOST: "my_db"
+      DB_PORT: "3306"
+      DB_USER: "db_user"
+      DB_PASSWORD: "my_password"
+      DB_DATABASE: "app_db"
+      HTTP_PORT: 6666
+      HTTP_SERVER_TIMEOUT: 50
+    ports:
+      - "7050:8080"
+    networks:
+      - go-network
+  mysql-db:
+    image: mysql:5.7
+    container_name: my_db
+    environment:
+      MYSQL_ROOT_PASSWORD: my_password
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: my_password
+    ports:
+      - "6033:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - go-network
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma
+    links:
+      - mysql-db
+    environment:
+      PMA_HOST: my_db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8081:80
+    networks:
+      - go-network
+networks:
+  go-network:
+    driver: bridge
+volumes:
+  dbdata:
